@@ -45,7 +45,15 @@ class Erip extends msPaymentHandler implements msPaymentInterface
 
         $this->log_info('Response', print_r($response, 1));
 
-        $home_url =$this->modx->getOption('site_url');
+        $home_url = $this->modx->getOption('site_url');
+
+        $res = $this->modx->getObject('modResource', $id_resource);
+
+        //Очистка кеша ресурса
+        $key = $res->getCacheKey();
+        $cache = $this->modx->cacheManager->getCacheProvider($this->modx->getOption('cache_resource_key', null, 'resource'));
+        $cache->delete($key, array('deleteTop' => true));
+        $cache->delete($key);
 
         if (isset($response['Errors'])) {
             $output_error =
@@ -58,17 +66,9 @@ class Erip extends msPaymentHandler implements msPaymentInterface
 
             $output_error = str_replace('##HOME_URL##', $home_url,  $output_error);
 
-            $res = $this->modx->getObject('modResource', $id_resource);
-
             $res->setContent($output_error);
 
             $res->save();
-
-            //Очистка кеша ресурса
-            $key = $res->getCacheKey();
-            $cache = $this->modx->cacheManager->getCacheProvider($this->modx->getOption('cache_resource_key', null, 'resource'));
-            $cache->delete($key, array('deleteTop' => true));
-            $cache->delete($key);
 
             $url = $this->modx->makeUrl($id_resource);
 
@@ -113,17 +113,9 @@ class Erip extends msPaymentHandler implements msPaymentInterface
                 $output = str_replace('##OR_CODE_DESCRIPTION##', '',  $output);
             }
 
-            $res = $this->modx->getObject('modResource', $id_resource);
-
             $res->setContent($output);
 
             $res->save();
-
-            //Очистка кеша ресурса
-            $key = $res->getCacheKey();
-            $cache = $this->modx->cacheManager->getCacheProvider($this->modx->getOption('cache_resource_key', null, 'resource'));
-            $cache->delete($key, array('deleteTop' => true));
-            $cache->delete($key);
 
             $url = $this->modx->makeUrl($id_resource);
 
@@ -203,7 +195,7 @@ class Erip extends msPaymentHandler implements msPaymentInterface
             "IsAddressEditable"  => $this->modx->getOption('EXPRESS_PAY_IS_ADRESS_EDITABLE'),
             "IsAmountEditable"   => $this->modx->getOption('EXPRESS_PAY_IS_AMOUNT_EDITABLE'),
             "EmailNotification"  => $adress->get('email'),
-            "SmsPhone"           => $adress->get('phone'),
+            "SmsPhone"           => preg_replace('/[^0-9]/', '', $adress->get('phone')),
         );
 
         $request['Signature'] = $this->compute_signature($request, $this->modx->getOption('EXPRESS_PAY_SECRET_WORD_ERIP'));
