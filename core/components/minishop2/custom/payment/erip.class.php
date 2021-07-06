@@ -203,7 +203,7 @@ class Erip extends msPaymentHandler implements msPaymentInterface
             "IsAddressEditable"  => $this->modx->getOption('EXPRESS_PAY_IS_ADRESS_EDITABLE'),
             "IsAmountEditable"   => $this->modx->getOption('EXPRESS_PAY_IS_AMOUNT_EDITABLE'),
             "EmailNotification"  => $adress->get('email'),
-            "SmsPhone"           => str_replace( array( '+', '-',',' , ';', '<', '>' ), '', $adress->get('phone')),
+            "SmsPhone"           => preg_replace('/[^0-9]/', '', $adress->get('phone')),
         );
 
         $request['Signature'] = $this->compute_signature($request, $this->modx->getOption('EXPRESS_PAY_SECRET_WORD_ERIP'));
