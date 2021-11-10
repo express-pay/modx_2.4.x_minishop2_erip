@@ -20,19 +20,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($json, true);
 
     $id = $data['AccountNo'];
+	
+    if (is_numeric($id))
+    {
+       $order = $modx->getObject('msOrder', array('id'=>$id));
+    } 
+    else
+    {
+       $order = false;
+    }
 
-    if ($modx->getOption('EXPRESS_PAY_IS_USE_SIGNATURE_FROM_NOTIFICATION_ERIP')) {
+    if ($modx->getOption('EXPRESS_PAY_IS_USE_SIGNATURE_FROM_NOTIFICATION_ERIP') && $order) {
 
         $secretWord = $modx->getOption('EXPRESS_PAY_SECRET_WORD_FROM_NOTIFICATION_ERIP');
 
         if ($signature == computeSignature($json, $secretWord)) {
             if ($data['CmdType'] == '3' && $data['Status'] == '3') {
-                $miniShop2->changeOrderStatus($id, 2); // Изменение статуса заказа на оплачен
+                $miniShop2->changeOrderStatus($order->id, 2); // Изменение статуса заказа на оплачен
                 header("HTTP/1.0 200 OK");
                 print $status = 'OK | payment received'; //Все успешно
             }elseif ($data['CmdType'] == '3' && $data['Status'] == '5')
             {
-                $miniShop2->changeOrderStatus($id, 4); // Изменение статуса заказа на отменён
+                $miniShop2->changeOrderStatus($order->id, 4); // Изменение статуса заказа на отменён
                 header("HTTP/1.0 200 OK");
                 print $status = 'OK | payment received'; //Все успешно
             }
@@ -40,15 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("HTTP/1.0 400 Bad Request");
             print $status = 'FAILED | wrong notify signature  ' .print_r($json,1). computeSignature($json, $secretWord). $secretWord; //Ошибка в параметрах
         }
-    } elseif ($order = $modx->getObject('msOrder', (int)$id)) {
+    } elseif ($order) {
         if ($data['CmdType'] == '3' && $data['Status'] == '3') 
         {
-            $miniShop2->changeOrderStatus($id, 2); // Изменение статуса заказа на оплачен
+            $miniShop2->changeOrderStatus($order->id, 2); // Изменение статуса заказа на оплачен
             header("HTTP/1.0 200 OK");
             print $status = 'OK | payment received'; //Все успешно
         }elseif ($data['CmdType'] == '3' && $data['Status'] == '5')
         {
-            $miniShop2->changeOrderStatus($id, 4); // Изменение статуса заказа на отменён
+            $miniShop2->changeOrderStatus($order->id, 4); // Изменение статуса заказа на отменён
             header("HTTP/1.0 200 OK");
             print $status = 'OK | payment received'; //Все успешно
         }
